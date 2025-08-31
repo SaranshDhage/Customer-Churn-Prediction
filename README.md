@@ -32,7 +32,7 @@ Businesses lose revenue when customers stop using their product or service (chur
 5. **Modeling** (wrapped in sklearn `Pipeline`):
 
    * Baselines: Logistic Regression.
-   * Tree‑based: Random Forest, Gradient Boosting / XGBoost (optional).
+   * Tree‑based: Random Forest, Gradient Boosting, LightGBM, XGBoost.
    * Cross‑validation: Stratified K‑Fold.
 6. **Hyperparameter tuning**: `RandomizedSearchCV` / `GridSearchCV` optimized primarily on ROC‑AUC; also track F1/Recall.
 7. **Evaluation**: Confusion matrix, ROC‑AUC, PR curve, classification report, calibration check.
@@ -47,7 +47,7 @@ Businesses lose revenue when customers stop using their product or service (chur
 * A single Jupyter notebook driving the **entire workflow** (EDA → preprocessing → baseline & advanced models → evaluation).
 * Clean separation of **preprocessing inside the model pipeline** to avoid data leakage.
 * **Stratified train/validation split** for fair comparison.
-* **Multiple algorithms compared** (logistic baseline + tree‑based), with basic **hyperparameter tuning**.
+* **Multiple algorithms compared** (logistic baseline + tree‑based), with **hyperparameter tuning** for LightGBM.
 * **Comprehensive evaluation**: ROC‑AUC, F1, precision/recall, confusion matrix; plots for ROC/PR and feature importance.
 * **Business‑aware thresholding** notes to align predictions with retention capacity.
 
@@ -55,100 +55,26 @@ Businesses lose revenue when customers stop using their product or service (chur
 
 ---
 
-## 4) Results (replace with your latest numbers)
+## 4) Results
+
+Best parameters found (LightGBM): `{'num_leaves': 40, 'n_estimators': 500, 'learning_rate': 0.05}`
 
 | Metric    | Validation |
 | --------- | ---------- |
-| ROC‑AUC   | `0.XX`     |
-| F1‑score  | `0.XX`     |
-| Precision | `0.XX`     |
-| Recall    | `0.XX`     |
-| Accuracy  | `0.XX`     |
+| Accuracy  | **0.939**  |
+| Precision | **0.878**  |
+| Recall    | **0.670**  |
+| F1‑score  | **0.760**  |
+| ROC‑AUC   | **0.901**  |
 
 **Confusion Matrix (at chosen threshold):**
 
 ```
-TN = ____   FP = ____
-FN = ____   TP = ____
+TN = 561   FP = 9
+FN = 32    TP = 65
 ```
 
-**Top drivers** (from importances/coefficients): `feature_1`, `feature_2`, `feature_3` …
-
-> Replace with your actual insights from the notebook (e.g., contract type, tenure, charges).
-
----
-
-## 5) Reproduce Locally
-
-### Prerequisites
-
-* Python ≥ 3.10
-* Recommended packages:
-
-```
-pandas numpy scikit-learn matplotlib seaborn imbalanced-learn xgboost shap joblib jupyter
-```
-
-### Steps
-
-```bash
-# 1) Create & activate a virtual environment (optional but recommended)
-python -m venv .venv
-source .venv/bin/activate   # Windows: .venv\Scripts\activate
-
-# 2) Install dependencies
-pip install -U pandas numpy scikit-learn matplotlib seaborn imbalanced-learn xgboost shap joblib jupyter
-
-# 3) Launch Jupyter and run the notebook cells in order
-jupyter notebook
-```
-
----
-
-## 6) Inference Example (after training)
-
-```python
-import joblib
-import pandas as pd
-
-# Load artifacts
-preprocessor = joblib.load("artifacts/preprocessor.pkl")  # if you saved it
-model = joblib.load("artifacts/churn_model.pkl")          # if you saved it
-
-# Example customer (replace with real feature names)
-row = {
-    "age": 34,
-    "tenure_months": 5,
-    "monthly_charges": 89.5,
-    "contract_type": "Month-to-month",
-    "is_paperless_billing": 1,
-    # ... all required columns
-}
-X = pd.DataFrame([row])
-Xp = preprocessor.transform(X)
-proba = model.predict_proba(Xp)[:, 1][0]
-label = int(proba >= 0.40)  # example threshold tuned to business needs
-print({"churn_probability": round(proba, 3), "predicted_label": label})
-```
-
----
-
-## 7) Project Structure (suggested)
-
-```
-Customer-Churn-Prediction/
-├─ Customer_churn_prediction.ipynb
-├─ Data_Science_Challenge.csv
-├─ artifacts/                 # (optional) saved model/preprocessor
-├─ notebooks/                 # (optional) EDA or experiments
-├─ src/                       # (optional) reusable pipeline code
-│  ├─ data.py                 # loaders, splitters
-│  ├─ preprocess.py           # ColumnTransformer builders
-│  ├─ train.py                # train/tune/evaluate
-│  └─ explain.py              # permutation/SHAP helpers
-├─ requirements.txt           # (optional) pinned deps
-└─ README.md
-```
+**Top drivers** (from importances/coefficients): contract type, tenure, monthly charges, and payment method.
 
 ---
 
@@ -156,6 +82,7 @@ Customer-Churn-Prediction/
 
 * **Why Logistic Regression?** Strong baseline, interpretable coefficients, fast to train.
 * **Why Tree‑based models?** Capture non‑linearities & interactions; deliver feature importances.
+* **Why LightGBM?** Efficient gradient boosting, strong performance on tabular data.
 * **Why put preprocessing in the pipeline?** Guarantees identical transforms in CV & at inference.
 * **Why ROC‑AUC + PR?** ROC‑AUC is threshold‑independent; PR is more informative under imbalance.
 * **Threshold tuning** helps match precision/recall trade‑offs to retention capacity & cost of outreach.
@@ -172,19 +99,6 @@ Customer-Churn-Prediction/
 
 ---
 
-## 10) License
+### Author
 
-This project is open‑sourced under the MIT License. See `LICENSE` (add if missing).
-
----
-
-## 11) Acknowledgements
-
-* scikit‑learn, imbalanced‑learn, XGBoost, SHAP communities.
-* Dataset provided via `Data_Science_Challenge.csv` in this repository.
-
----
-
-### Maintainer
-
-**Saransh Dhage** — feel free to open an issue or reach out for collaboration.
+**Saransh Dhage**
